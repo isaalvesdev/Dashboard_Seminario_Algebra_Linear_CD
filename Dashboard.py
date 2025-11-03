@@ -37,7 +37,7 @@ y_bact = 50 / (1 + np.exp(-1.2 * (x_bact - 5))) + np.random.normal(0, 1.2, len(x
 df_bact = pd.DataFrame({"x": x_bact, "y": y_bact})
 
 #População
-POP_BRASIL = "C:\\Users\\Isabe\\OneDrive\\Documentos\\Mestrado\\2° Semestre\\Algebra Para Ciência de Dados\\Seminario\\Crescimento_Populacional_Brasil.csv"
+POP_BRASIL = "https://github.com/isaalvesdev/Dashboard_Seminario_Algebra_Linear_CD/raw/refs/heads/main/Crescimento_Populacional_Brasil.csv"
 
 tab1,tab2,tab3,tab4 = st.tabs(["Bactérias (demo)","População (Brasil)","LM passo-a-passo","Exercício Interativo"])
 
