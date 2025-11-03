@@ -278,42 +278,6 @@ with tab4:
     k_manual = st.slider("k manual",-5.0,5.0,0.5)
     x0_manual = st.slider("x0 manual",float(df_bact["x"].min()),float(df_bact["x"].max()),float(df_bact["x"].median()))
 
-    #Salva os arquivos com as interações
-    def salvar_interacoes(dados):
-
-        arquivo = "LOG.csv"
-        file_exists = os.path.isfile(arquivo)
-
-        with open(arquivo, 'a', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=dados.keys())
-            if not file_exists:
-                writer.writeheader()
-            writer.writerow(dados)
-
-        
-    
-    #Salva as figuras
-    def salvar_graficos(fig, usuario,timestamp):
-
-
-        if not os.path.exists("Graficos_Salvos"):
-            os.makedirs("Graficos_Salvos")
-
-        nome_seguro = "".join(c for c in usuario if c.isalnum() or c in (' ', '-', '_')).rstrip()
-
-        if not nome_seguro and nome_seguro != 'Anônimo':
-            nome_arquivo = f"graficos_salvos/grafico_anonimo_{timestamp}.png"
-        
-        else:
-            nome_arquivo = f"graficos_salvos/grafico_{nome_seguro}_{timestamp}.png"
-
-
-        fig.savefig(nome_arquivo, dpi=200, bbox_inches='tight', facecolor='black', edgecolor='none',pad_inches = 0.3)
-        plt.close(fig)
-        return nome_arquivo
-     
-
-
 
 
 
@@ -367,28 +331,49 @@ with tab4:
         return fig2
     
 
-    if st.button("Gerar gráficos e Salvar Interações"):
+    if st.button("Gerar gráficos"):
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         fig2 = grafico_interativo(L_manual,k_manual,x0_manual)
-
-
-
-        interacao = {
-            'Timestamp':datetime.now().isoformat(),
-            "Timestamp_arquivo":timestamp,
-            "Identificação":usuario if usuario else "Anônimo",
-            "L_value":L_manual,
-            "k_value":k_manual,
-            "x0_value":x0_manual,
-            "user_agent":f"grafico_{usuario if usuario else 'anonimo'}_{timestamp}.png",
-            'session_id': hash(str(datetime.now()))
-        }
-
-        salvar_interacoes(interacao)
-        nome_arquivo_grafico = salvar_graficos(fig2, usuario if usuario else 'Anônimo', timestamp)
-        st.success(f"Interação registrada! Gráfico salvo como: {os.path.basename(nome_arquivo_grafico)}")
         st.pyplot(fig2)
+
+        st.subheader("Parâmetros Ajustados")
+
+
+        parametros_df = pd.DataFrame({
+            'Parâmetro': ['L (Capacidade)', 'k (Taxa)', 'x₀ (Ponto Inflexão)', 'Usuário'],
+            'Valor': [f"{L_manual:.2f}", f"{k_manual:.2f}", f"{x0_manual:.2f}", usuario if usuario else "Anônimo"],
+            'Descrição': [
+                'Capacidade máxima de suporte',
+                'Taxa de crescimento', 
+                'Ponto onde crescimento é máximo',
+                'Identificação do usuário'
+            ]
+        })
+
+        st.dataframe(parametros_df, use_container_width=True)
+        
+        st.subheader("Métricas de Ajuste")
+        
+        y_teorico = logistica(df_bact['x'], L_manual, k_manual, x0_manual)
+        residuos = df_bact['y'] - y_teorico
+        rmse = np.sqrt(np.mean(residuos**2))
+        r_squared = 1 - np.sum(residuos**2) / np.sum((df_bact['y'] - df_bact['y'].mean())**2)
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.metric("RMSE", f"{rmse:.3f}")
+        with col2:
+            st.metric("R²", f"{r_squared:.3f}")
+        with col3:
+            st.metric("Coef. Variação", f"{(rmse/df_bact['y'].mean()):.3f}")
+
+    else:
+         st.info("Ajuste os parâmetros e clique em 'Gerar Gráfico' para ver os resultados")
+         fig_base = grafico_interativo(L_manual, k_manual, x0_manual)
+         st.pyplot(fig_base)
+
 
 
 
